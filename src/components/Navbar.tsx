@@ -1,11 +1,14 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Search } from 'lucide-react';
+import { Menu, X, Search, User } from 'lucide-react';
 import { Button } from './ui/button';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Check if a user is logged in
+  const isLoggedIn = localStorage.getItem('finance_blog_user') !== null;
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm shadow-sm">
@@ -25,10 +28,18 @@ const Navbar = () => {
             <Link to="/categories/investing" className="nav-link">Investissement</Link>
             <Link to="/categories/passive-income" className="nav-link">Revenus Passifs</Link>
             <Link to="/categories/gen-z-finance" className="nav-link">Finance Gen Z</Link>
+            <Link to="/tools" className="nav-link">Outils</Link>
             <Link to="/about" className="nav-link">À Propos</Link>
+            <Link to="/newsletter" className="nav-link">Newsletter</Link>
             <Button variant="ghost" size="icon" className="ml-2">
               <Search className="h-5 w-5" />
             </Button>
+            <Link to="/dashboard">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                {isLoggedIn ? 'Tableau de bord' : 'Connexion'}
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Navigation Button */}
@@ -68,8 +79,17 @@ const Navbar = () => {
             <Link to="/categories/gen-z-finance" className="block px-3 py-2 text-base font-medium hover:bg-gray-50 rounded-md" onClick={() => setIsOpen(false)}>
               Finance Gen Z
             </Link>
+            <Link to="/tools" className="block px-3 py-2 text-base font-medium hover:bg-gray-50 rounded-md" onClick={() => setIsOpen(false)}>
+              Outils
+            </Link>
             <Link to="/about" className="block px-3 py-2 text-base font-medium hover:bg-gray-50 rounded-md" onClick={() => setIsOpen(false)}>
               À Propos
+            </Link>
+            <Link to="/newsletter" className="block px-3 py-2 text-base font-medium hover:bg-gray-50 rounded-md" onClick={() => setIsOpen(false)}>
+              Newsletter
+            </Link>
+            <Link to="/dashboard" className="block px-3 py-2 text-base font-medium hover:bg-gray-50 rounded-md" onClick={() => setIsOpen(false)}>
+              {isLoggedIn ? 'Tableau de bord' : 'Connexion'}
             </Link>
             <div className="px-3 py-2">
               <div className="relative">

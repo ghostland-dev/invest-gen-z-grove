@@ -10,6 +10,8 @@ import NotFound from "./pages/NotFound";
 import CategoryPage from "./pages/CategoryPage";
 import ArticlePage from "./pages/ArticlePage";
 import ToolsPage from "./pages/ToolsPage";
+import NewsletterPage from "./pages/NewsletterPage";
+import DashboardPage from "./pages/DashboardPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/tools" element={<ToolsPage />} />
           <Route path="/categories/:slug" element={<CategoryPage />} />
           <Route path="/articles/:slug" element={<ArticlePage />} />
+          <Route path="/newsletter" element={<NewsletterPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -1,34 +1,77 @@
 
-import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Mail } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { toast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 const NewsletterCard = () => {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      toast({
+        variant: "destructive",
+        title: "Adresse email invalide",
+        description: "Veuillez entrer une adresse email valide.",
+      });
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false);
+      setEmail('');
+      toast({
+        title: "Préinscription réussie",
+        description: "Merci pour votre intérêt ! Consultez votre boîte mail pour confirmer votre inscription.",
+      });
+    }, 1000);
+  };
+
   return (
-    <Card className="w-full bg-gray-50 border-gray-200">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl">Newsletter Hebdomadaire</CardTitle>
-        <CardDescription>
-          Conseils financiers exclusifs et opportunités d'investissement
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <Input 
-            type="email" 
-            placeholder="Votre adresse email" 
-            className="border-gray-300"
-          />
-          <Button className="w-full bg-primary hover:bg-primary/90">
-            S'inscrire <Mail className="ml-2 h-4 w-4" />
-          </Button>
-          <p className="text-xs text-gray-500 text-center">
-            Nous respectons votre vie privée. Désabonnez-vous à tout moment.
-          </p>
+    <div className="bg-gray-50 rounded-lg p-6">
+      <div className="flex items-center space-x-3 mb-4">
+        <div className="bg-primary/20 p-2 rounded-full">
+          <Mail className="h-5 w-5 text-primary" />
         </div>
-      </CardContent>
-    </Card>
+        <h3 className="font-bold text-lg">Restez informé</h3>
+      </div>
+      
+      <p className="text-gray-600 text-sm mb-4">
+        Inscrivez-vous à notre newsletter pour recevoir les derniers conseils financiers et actualités directement dans votre boîte mail.
+      </p>
+      
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <Input
+          type="email"
+          placeholder="Votre adresse e-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full"
+        />
+        
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? 'En cours...' : "S'inscrire"}
+        </Button>
+      </form>
+      
+      <div className="mt-4 text-center">
+        <Link to="/newsletter" className="text-sm text-primary hover:underline">
+          Voir tous les avantages de notre newsletter
+        </Link>
+      </div>
+    </div>
   );
 };
 
