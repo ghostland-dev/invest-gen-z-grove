@@ -24,12 +24,21 @@ const NewsletterCard = () => {
     
     setIsLoading(true);
     
+    // Store in localStorage for demo
+    const subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
+    subscribers.push({
+      email,
+      date: new Date().toISOString(),
+      interests: ['all'], // Simple subscription
+    });
+    localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
+    
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
       setEmail('');
       toast({
-        title: "Préinscription réussie",
+        title: "Inscription réussie",
         description: "Merci pour votre intérêt ! Consultez votre boîte mail pour confirmer votre inscription.",
       });
     }, 1000);
@@ -41,11 +50,11 @@ const NewsletterCard = () => {
         <div className="bg-primary/20 p-2 rounded-full">
           <Mail className="h-5 w-5 text-primary" />
         </div>
-        <h3 className="font-bold text-lg">Restez informé</h3>
+        <h3 className="font-bold text-lg">Contenu exclusif</h3>
       </div>
       
       <p className="text-gray-600 text-sm mb-4">
-        Inscrivez-vous à notre newsletter pour recevoir les derniers conseils financiers et actualités directement dans votre boîte mail.
+        Inscrivez-vous à notre newsletter pour recevoir les derniers conseils financiers, actualités et accéder à des articles exclusifs.
       </p>
       
       <form onSubmit={handleSubmit} className="space-y-3">

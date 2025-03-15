@@ -1,4 +1,3 @@
-
 export interface Article {
   id: number;
   title: string;
@@ -10,6 +9,7 @@ export interface Article {
   image: string;
   category: string;
   featured?: boolean;
+  exclusive?: boolean; // Nouveau champ pour les articles exclusifs
 }
 
 export interface Category {
@@ -153,6 +153,41 @@ const articles: Article[] = [
     readTime: "7 min",
     image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "gen-z-finance"
+  },
+  
+  // Articles exclusifs pour les abonnés
+  {
+    id: 13,
+    title: "Stratégies avancées d'investissement pour battre le marché",
+    slug: "strategies-avancees-investissement",
+    excerpt: "Techniques utilisées par les investisseurs professionnels pour surperformer les indices boursiers.",
+    date: "5 Juillet 2023",
+    readTime: "15 min",
+    image: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    category: "investing",
+    exclusive: true
+  },
+  {
+    id: 14,
+    title: "Comment créer un portefeuille d'investissement qui rapporte 20% par an",
+    slug: "portefeuille-20-pourcent",
+    excerpt: "Méthode détaillée pour construire un portefeuille d'actifs à haut rendement avec une gestion du risque efficace.",
+    date: "2 Juillet 2023",
+    readTime: "12 min",
+    image: "https://images.unsplash.com/photo-1629337279892-ac139aa5fc48?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    category: "investing",
+    exclusive: true
+  },
+  {
+    id: 15,
+    title: "Les secrets des millionnaires autodidactes",
+    slug: "secrets-millionnaires",
+    excerpt: "Étude de cas sur des personnes ordinaires ayant atteint la liberté financière avant 40 ans.",
+    date: "10 Juillet 2023",
+    readTime: "10 min",
+    image: "https://images.unsplash.com/photo-1606191208054-dd7420acadff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    category: "passive-income",
+    exclusive: true
   }
 ];
 
@@ -206,4 +241,15 @@ export const getRecentArticles = (limit = 6) => {
 // Helper function to get article by slug
 export const getArticleBySlug = (slug: string) => {
   return articles.find(article => article.slug === slug);
+};
+
+// Helper function to check if an email is subscribed to the newsletter
+export const isSubscribed = (email: string): boolean => {
+  const subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
+  return subscribers.some((sub: any) => sub.email === email);
+};
+
+// Helper function to get all exclusive articles
+export const getExclusiveArticles = () => {
+  return articles.filter(article => article.exclusive);
 };

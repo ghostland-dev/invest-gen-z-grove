@@ -1,32 +1,179 @@
 
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { Button } from '@/components/ui/button';
-import { Calendar, Clock, ArrowLeft, Share2 } from 'lucide-react';
-import { getArticleBySlug, getRecentArticles } from '../data/categoryData';
-import { useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { getArticleBySlug, isSubscribed } from '../data/categoryData';
 import NewsletterCard from '../components/NewsletterCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { Lock, Mail } from 'lucide-react';
 
 const ArticlePage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const article = getArticleBySlug(slug || '');
-  const relatedArticles = getRecentArticles(3);
-  
+  const navigate = useNavigate();
+  const [article, setArticle] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [emailChecked, setEmailChecked] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+
+  // Check if article is accessible
   useEffect(() => {
-    // Scroll to top when article changes
-    window.scrollTo(0, 0);
+    if (slug) {
+      const foundArticle = getArticleBySlug(slug);
+      setArticle(foundArticle);
+      
+      // Si l'article n'est pas exclusif, on donne l'accès directement
+      if (foundArticle && !foundArticle.exclusive) {
+        setHasAccess(true);
+      } else {
+        // Vérifier si l'utilisateur a un accès enregistré
+        const userEmail = localStorage.getItem('newsletter_user_email');
+        if (userEmail) {
+          setEmail(userEmail);
+          checkSubscriptionStatus(userEmail);
+        }
+      }
+      
+      setLoading(false);
+    }
   }, [slug]);
+  
+  // Vérifie si l'email est abonné à la newsletter
+  const checkSubscriptionStatus = (emailToCheck: string) => {
+    const subscribed = isSubscribed(emailToCheck);
+    setHasAccess(subscribed);
+    setEmailChecked(true);
+    
+    if (subscribed) {
+      localStorage.setItem('newsletter_user_email', emailToCheck);
+    }
+  };
+  
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !email.includes('@')) {
+      toast({
+        variant: "destructive",
+        title: "Adresse email invalide",
+        description: "Veuillez entrer une adresse email valide.",
+      });
+      return;
+    }
+    
+    checkSubscriptionStatus(email);
+    
+    if (!isSubscribed(email)) {
+      toast({
+        variant: "destructive",
+        title: "Accès refusé",
+        description: "Cette adresse email n'est pas inscrite à notre newsletter. Veuillez vous inscrire pour accéder à ce contenu exclusif.",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-12">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-12"></div>
+            <div className="h-64 bg-gray-200 rounded mb-8"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!article) {
     return (
       <Layout>
+        <div className="container mx-auto px-4 py-12 text-center">
+          <h1 className="text-3xl font-bold mb-4">Article non trouvé</h1>
+          <p className="mb-8">L'article que vous recherchez n'existe pas ou a été supprimé.</p>
+          <Button onClick={() => navigate('/')}>Retour à l'accueil</Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Afficher le contenu exclusif ou l'écran de vérification
+  if (article.exclusive && !hasAccess) {
+    return (
+      <Layout>
         <div className="container mx-auto px-4 py-12">
-          <h1 className="text-3xl font-bold mb-6">Article non trouvé</h1>
-          <p className="mb-6">L'article que vous recherchez n'existe pas ou a été déplacé.</p>
-          <Button asChild>
-            <Link to="/">Retour à l'accueil</Link>
-          </Button>
+          <div className="max-w-4xl mx-auto">
+            <article>
+              <h1 className="text-3xl font-bold mb-3">{article.title}</h1>
+              <div className="text-gray-500 text-sm mb-6">
+                {article.date} • {article.readTime} de lecture • Catégorie: {article.category}
+              </div>
+              
+              <div className="bg-gray-50 border border-gray-100 rounded-lg p-8 text-center my-8">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-amber-100 p-3 rounded-full">
+                    <Lock className="h-8 w-8 text-amber-600" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold mb-3">Contenu exclusif</h2>
+                <p className="text-gray-600 mb-6">
+                  Cet article est réservé à nos abonnés newsletter. Veuillez vérifier votre adresse email pour y accéder.
+                </p>
+                
+                {!emailChecked ? (
+                  <form onSubmit={handleEmailSubmit} className="max-w-md mx-auto">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Input
+                        type="email"
+                        placeholder="Votre adresse email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                      <Button type="submit">
+                        Vérifier l'accès
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-red-500">
+                      Cette adresse email n'est pas inscrite à notre newsletter.
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/newsletter')}
+                      className="flex items-center gap-2"
+                    >
+                      <Mail className="h-4 w-4" />
+                      S'inscrire à la newsletter
+                    </Button>
+                  </div>
+                )}
+                
+                <p className="text-sm text-gray-500 mt-6">
+                  L'inscription à notre newsletter est gratuite et vous donne accès à du contenu exclusif.
+                </p>
+              </div>
+              
+              <div className="prose max-w-none">
+                <p className="text-lg font-medium">{article.excerpt}</p>
+                <div className="blur-sm select-none">
+                  {/* Contenu flouté */}
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor magna at metus pellentesque, in finibus neque faucibus...</p>
+                  <p>Sed vitae eros nec nisi pharetra volutpat. Phasellus vel dui vel tellus facilisis varius vitae id nunc...</p>
+                  <p>Suspendisse potenti. Ut venenatis magna quis semper vulputate. Vivamus euismod ultricies lacus eget tincidunt...</p>
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
       </Layout>
     );
@@ -35,96 +182,50 @@ const ArticlePage = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto mb-12">
-          <Link to={`/categories/${article.category}`} className="inline-flex items-center text-primary mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Retour à la catégorie
-          </Link>
-          
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">{article.title}</h1>
-          
-          <div className="flex items-center text-gray-500 mb-6">
-            <Calendar className="w-4 h-4 mr-1" /> {article.date}
-            <span className="mx-2">•</span>
-            <Clock className="w-4 h-4 mr-1" /> {article.readTime}
-          </div>
-          
-          <div className="aspect-w-16 aspect-h-9 mb-8 overflow-hidden rounded-lg">
+        <div className="max-w-4xl mx-auto">
+          <article>
+            <h1 className="text-3xl font-bold mb-3">{article.title}</h1>
+            <div className="text-gray-500 text-sm mb-6">
+              {article.date} • {article.readTime} de lecture • Catégorie: {article.category}
+              {article.exclusive && (
+                <span className="ml-2 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-xs">
+                  Exclusif
+                </span>
+              )}
+            </div>
             <img 
               src={article.image} 
               alt={article.title} 
-              className="object-cover w-full h-full"
+              className="w-full h-[400px] object-cover rounded-lg mb-8" 
             />
-          </div>
-          
-          {/* Placeholder for article content - in a real app, this would be rich text content */}
-          <div className="prose max-w-none">
-            <p className="text-lg leading-relaxed mb-6">
-              {article.excerpt}
-            </p>
-            <p className="mb-6">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum at semper magna. Sed non felis vitae turpis ultrices sodales. Vivamus ut sapien at nisi elementum eleifend. Praesent fringilla, purus nec facilisis mattis, tellus lacus pellentesque dolor, at facilisis quam enim ut magna.
-            </p>
-            <h2 className="text-2xl font-bold mt-8 mb-4">Les points clés à retenir</h2>
-            <p className="mb-6">
-              Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.
-            </p>
-            <ul className="list-disc pl-6 mb-6">
-              <li className="mb-2">Facilisis quam enim ut magna</li>
-              <li className="mb-2">Sed non felis vitae turpis ultrices sodales</li>
-              <li className="mb-2">Vivamus ut sapien at nisi elementum eleifend</li>
-              <li className="mb-2">Praesent fringilla, purus nec facilisis mattis</li>
-            </ul>
-            <p className="mb-6">
-              Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.
-            </p>
-          </div>
-          
-          <div className="border-t border-b border-gray-200 py-6 my-8 flex justify-between items-center">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <Share2 className="w-4 h-4" /> Partager
-            </Button>
-            <div>
-              <Link to={`/categories/${article.category}`} className="text-sm text-primary font-medium">
-                #{article.category}
-              </Link>
+            <div className="prose max-w-none">
+              <p className="text-lg font-medium">{article.excerpt}</p>
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum. Cras porta condimentum lectus, non gravida ipsum blandit eget. Nam condimentum neque ac felis posuere, a vestibulum nulla sagittis.
+              </p>
+              <h2>Les points clés à retenir</h2>
+              <p>
+                Fusce vehicula dolor arcu, sit amet blandit dolor mollis nec. Donec viverra eleifend lacus, vitae ullamcorper metus. Sed sollicitudin ipsum quis nunc sollicitudin ultrices. Donec euismod scelerisque ligula. Maecenas eu varius risus, eu aliquet arcu.
+              </p>
+              <ul>
+                <li>Pellentesque non pretium sem</li>
+                <li>Cras dapibus risus ac nulla fringilla</li>
+                <li>Maecenas tempus ante vel ligula pulvinar</li>
+                <li>Vivamus eleifend malesuada dui in imperdiet</li>
+              </ul>
+              <p>
+                Donec lobortis ultricies turpis, eu viverra magna gravida quis. Fusce sit amet pretium nulla. Duis rutrum metus vel libero sodales, pellentesque varius ex pulvinar.
+              </p>
+              <blockquote>
+                "La gestion efficace de vos finances personnelles est essentielle pour atteindre vos objectifs de vie à long terme."
+              </blockquote>
+              <p>
+                Suspendisse eu justo id lacus mollis interdum. Sed sem libero, sollicitudin id dui a, molestie faucibus diam. Aliquam erat volutpat. Nulla facilisi. In accumsan tincidunt justo id pulvinar.
+              </p>
             </div>
-          </div>
-        </div>
-        
-        <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8 mb-12">
-          <div className="md:col-span-2">
-            <h3 className="text-2xl font-bold mb-6">Articles similaires</h3>
-            <div className="grid sm:grid-cols-2 gap-6">
-              {relatedArticles.slice(0, 2).map((related) => (
-                <Card key={related.id} className="h-full flex flex-col">
-                  <CardHeader className="pb-2">
-                    <div className="aspect-w-16 aspect-h-9 mb-4 overflow-hidden rounded-md">
-                      <img 
-                        src={related.image} 
-                        alt={related.title} 
-                        className="object-cover w-full h-full transition-transform hover:scale-105"
-                      />
-                    </div>
-                    <CardTitle className="text-lg">{related.title}</CardTitle>
-                    <CardDescription className="flex items-center text-xs mt-1">
-                      <Calendar className="w-3 h-3 mr-1" /> {related.date}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    <p className="text-gray-600 text-sm line-clamp-2">{related.excerpt}</p>
-                  </CardContent>
-                  <CardFooter className="mt-auto pt-0">
-                    <Button asChild variant="link" className="p-0 h-auto text-sm font-semibold text-primary">
-                      <Link to={`/articles/${related.slug}`}>Lire l'article →</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          </div>
+          </article>
           
-          <div>
-            <h3 className="text-2xl font-bold mb-6">Newsletter</h3>
+          <div className="mt-12">
             <NewsletterCard />
           </div>
         </div>

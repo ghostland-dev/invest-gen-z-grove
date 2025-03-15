@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -58,6 +57,7 @@ interface Article {
   date: string;
   status: 'draft' | 'published';
   slug: string;
+  exclusive?: boolean;
 }
 
 // Article form schema
@@ -221,24 +221,27 @@ const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string) => 
   );
 };
 
-// Article form component
+// Updated ArticleForm component to include exclusive flag
 const ArticleForm = ({
   defaultValues,
   onSubmit,
   onCancel,
 }: {
-  defaultValues?: Partial<z.infer<typeof articleSchema>>;
-  onSubmit: (values: z.infer<typeof articleSchema>) => void;
+  defaultValues?: Partial<z.infer<typeof articleSchema> & { exclusive?: boolean }>;
+  onSubmit: (values: z.infer<typeof articleSchema> & { exclusive?: boolean }) => void;
   onCancel: () => void;
 }) => {
-  const form = useForm<z.infer<typeof articleSchema>>({
-    resolver: zodResolver(articleSchema),
+  const form = useForm<z.infer<typeof articleSchema> & { exclusive?: boolean }>({
+    resolver: zodResolver(articleSchema.extend({
+      exclusive: z.boolean().optional(),
+    })),
     defaultValues: defaultValues || {
       title: "",
       excerpt: "",
       content: "",
       category: "",
       status: "draft",
+      exclusive: false,
     },
   });
 
@@ -330,6 +333,29 @@ const ArticleForm = ({
                 </select>
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="exclusive"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary"
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Article exclusif</FormLabel>
+                <FormDescription>
+                  Cet article ne sera accessible qu'aux abonnés de la newsletter.
+                </FormDescription>
+              </div>
             </FormItem>
           )}
         />
@@ -438,7 +464,7 @@ const DashboardPage = () => {
     setIsEditing(true);
   };
 
-  const handleSubmitArticle = (values: z.infer<typeof articleSchema>) => {
+  const handleSubmitArticle = (values: z.infer<typeof articleSchema> & { exclusive?: boolean }) => {
     if (currentArticle) {
       updateArticle(currentArticle.id, values);
       toast({
