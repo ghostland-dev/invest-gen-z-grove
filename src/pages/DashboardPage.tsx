@@ -72,6 +72,12 @@ const articleSchema = z.object({
   exclusive: z.boolean().optional(),
 });
 
+// Login form schema
+const loginSchema = z.object({
+  email: z.string().email({ message: "Veuillez entrer une adresse email valide" }),
+  password: z.string().min(6, { message: "Le mot de passe doit contenir au moins 6 caractères" }),
+});
+
 // Article management hooks
 const useArticles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
