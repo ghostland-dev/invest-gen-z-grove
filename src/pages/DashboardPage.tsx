@@ -69,12 +69,7 @@ const articleSchema = z.object({
   status: z.enum(["draft", "published"], {
     required_error: "Veuillez sélectionner un statut",
   }),
-});
-
-// Login form schema
-const loginSchema = z.object({
-  email: z.string().email({ message: "Veuillez entrer une adresse email valide" }),
-  password: z.string().min(6, { message: "Le mot de passe doit contenir au moins 6 caractères" }),
+  exclusive: z.boolean().optional(),
 });
 
 // Article management hooks
@@ -464,7 +459,7 @@ const DashboardPage = () => {
     setIsEditing(true);
   };
 
-  const handleSubmitArticle = (values: z.infer<typeof articleSchema> & { exclusive?: boolean }) => {
+  const handleSubmitArticle = (values: z.infer<typeof articleSchema>) => {
     if (currentArticle) {
       updateArticle(currentArticle.id, values);
       toast({
@@ -472,7 +467,17 @@ const DashboardPage = () => {
         description: "Votre article a été mis à jour avec succès.",
       });
     } else {
-      const newArticle = addArticle(values);
+      // Fix: Cast the values to ensure all required properties are present
+      const articleData = {
+        title: values.title,
+        excerpt: values.excerpt,
+        content: values.content,
+        category: values.category,
+        status: values.status,
+        exclusive: values.exclusive
+      };
+      
+      const newArticle = addArticle(articleData);
       toast({
         title: "Article créé",
         description: "Votre nouvel article a été créé avec succès.",
